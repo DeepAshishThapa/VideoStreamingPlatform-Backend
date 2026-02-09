@@ -5,6 +5,6 @@ class ApiResponse{
         this.data=data,
         this.statusCode=statusCode
     }
-}
+} 
 
 export default ApiResponse
