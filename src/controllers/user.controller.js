@@ -204,7 +204,7 @@ const refreshAccessToken = async (req, res) => {
 
         const options = { httpOnly: true, secure: true }
 
-        const { accessToken, newrefreshToken } = await generateAccessAndRefreshToken(user._id)
+        const { accessToken, refreshToken } = await generateAccessAndRefreshToken(user._id)
 
         return res
             .status(200)
@@ -213,7 +213,7 @@ const refreshAccessToken = async (req, res) => {
             .json(
                 new ApiResponse(
                     200,
-                    { accessToken, refreshToken: newrefreshToken },
+                    { accessToken, refreshToken },
                     "Access token refreshed"
 
                 )
@@ -236,7 +236,7 @@ const changeCurrentPassword = async (req, res) => {
 
     const user = await User.findById(req.user?._id)
 
-    isPasswordCorrect = await user.isPasswordCorrect(oldPassword)
+    const isPasswordCorrect = await user.isPasswordCorrect(oldPassword)
 
     if (!isPasswordCorrect) {
         throw new ApiError(400, "Invalid old password")
@@ -289,8 +289,9 @@ const updateUserAvatar = async (req, res) => {
     }
 
     const avatar = await uploadOnCloudinary(avatarLocalPath)
+    console.log("Cloudinary response:", avatar)
 
-    if (!avatar.url) {
+    if (!avatar?.optimized) {
         throw new ApiError(400, "Error while uploading avatar")
     }
 
@@ -298,7 +299,7 @@ const updateUserAvatar = async (req, res) => {
         req.user?._id,
         {
             $set: {
-                avatar: avatar.url
+                avatar: avatar.optimized
             }
         },
         { new: true }
@@ -318,7 +319,7 @@ const updateUsercoverImage = async (req, res) => {
 
     const coverImage = await uploadOnCloudinary(coverImageLocalPath)
 
-    if (!coverImage.url) {
+    if (!coverImage?.optimized) {
         throw new ApiError(400, "Error while uploading coverImage")
     }
 
@@ -326,7 +327,7 @@ const updateUsercoverImage = async (req, res) => {
         req.user?._id,
         {
             $set: {
-                coverImage: avatar.url
+                coverImage: coverImage.optimized
             }
         },
         { new: true }
