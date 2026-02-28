@@ -3,6 +3,7 @@ import { User } from "../models/user.model.js"
 import { uploadOnCloudinary } from "../utils/cloudinary.js"
 import ApiResponse from "../utils/ApiResponse.js"
 import jwt from "jsonwebtoken"
+import mongoose from "mongoose"
 
 const generateAccessAndRefreshToken = async (userId) => {
     try {
@@ -342,7 +343,7 @@ const updateUsercoverImage = async (req, res) => {
 const getUserChannelProfile = async (req, res) => {
     const { username } = req.params
 
-    if (!username?.trim) {
+    if (!username?.trim()) {
         throw new ApiError(400, "username is missing")
     }
 
@@ -366,7 +367,7 @@ const getUserChannelProfile = async (req, res) => {
                 from: "subscriptions",
                 localField: "_id",
                 foreignField: "subscriber",
-                as: "subscribeTo"
+                as: "subscribedTo"
 
             }
         },
@@ -465,9 +466,9 @@ const getWatchHistory=async(req,res)=>{
     .status(200)
     .json(
         new ApiResponse(
-            200,
-            user[0].watchHistory,
-            "Watch history fetched successfully"
+            200, 
+            "Watch history fetched successfully",
+            user[0].watchHistory    
         )
     )
 
