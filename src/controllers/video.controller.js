@@ -176,7 +176,28 @@ const updateVideo = asyncHandler(async (req, res) => {
 
 const deleteVideo = asyncHandler(async (req, res) => {
     const { videoId } = req.params
-    //TODO: delete video
+
+     // Validate ID
+    if (!isValidObjectId(videoId)) {
+        throw new ApiError(400, "Invalid video ID")
+    }
+
+    // Find video
+    const video = await Video.findById(videoId)
+
+    if (!video) {
+        throw new ApiError(404, "Video not found")
+    }
+
+    // Ownership check
+    if (video.owner.toString() !== req.user._id.toString()) {
+        throw new ApiError(403, "You are not allowed to delete this video")
+    }
+
+     // Delete from database
+    await video.deleteOne()
+
+
 })
 
 const togglePublishStatus = asyncHandler(async (req, res) => {
