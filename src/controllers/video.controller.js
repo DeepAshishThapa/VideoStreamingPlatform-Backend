@@ -54,28 +54,28 @@ const getAllVideos = asyncHandler(async (req, res) => {
 
 const publishAVideo = asyncHandler(async (req, res) => {
     const { title, description } = req.body
-    
-    if (!title || !description){
+
+    if (!title || !description) {
         throw new ApiError(400, "Title and description are required")
     }
 
     // get local file path from multer
-    const videoLocalPath= req.files?.videoFile?.[0].path 
-    const thumbnailLocalPath=req.files?.thumbnail?.[0].path
+    const videoLocalPath = req.files?.videoFile?.[0].path
+    const thumbnailLocalPath = req.files?.thumbnail?.[0].path
 
-    if (!videoLocalPath){
+    if (!videoLocalPath) {
         throw new ApiError(400, "Video file is required")
     }
 
-    if (!thumbnailLocalPath){
+    if (!thumbnailLocalPath) {
         throw new ApiError(400, "thumbnail file is required")
     }
 
     // upload to cloudinary
-    const uploadedVideo=await uploadOnCloudinary(videoLocalPath)
+    const uploadedVideo = await uploadOnCloudinary(videoLocalPath)
     const uploadedThumbnail = await uploadOnCloudinary(thumbnailLocalPath)
 
-     if (!uploadedVideo?.original) {
+    if (!uploadedVideo?.original) {
         throw new ApiError(500, "Error uploading video")
     }
 
@@ -101,7 +101,27 @@ const publishAVideo = asyncHandler(async (req, res) => {
 
 const getVideoById = asyncHandler(async (req, res) => {
     const { videoId } = req.params
-    //TODO: get video by id
+
+    if (!isValidObjectId(videoId)) {
+        throw new ApiError(400, "Invalid video ID")
+    }
+
+    // Find video and populate owner
+    const video = await Video.findById(videoId)
+        .populate("owner", "username avatar")
+
+    if (!video) {
+        throw new ApiError(404, "Video not found")
+    }
+
+    // Increase view count
+    video.views += 1
+    await video.save()
+
+    return res.status(200).json(
+        new ApiResponse(200, "Video fetched successfully", video)
+    )
+
 })
 
 const updateVideo = asyncHandler(async (req, res) => {
