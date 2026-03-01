@@ -1,0 +1,129 @@
+import mongoose, { isValidObjectId } from "mongoose"
+import { Video } from "../models/video.model.js"
+import { User } from "../models/user.model.js"
+import { ApiError } from "../utils/ApiError.js"
+import { ApiResponse } from "../utils/ApiResponse.js"
+import { asyncHandler } from "../utils/asyncHandler.js"
+import { uploadOnCloudinary } from "../utils/cloudinary.js"
+
+
+const getAllVideos = asyncHandler(async (req, res) => {
+    let { page = 1, limit = 10, query, sortBy = "createdAt", sortType = "desc", userId } = req.query
+
+    page = Number(page)
+    limit = Number(limit)
+
+    //  Build match filter
+    const match = {
+        isPublished: true
+    }
+
+    // Search by title
+    if (query) {
+        match.title = { $regex: query, $options: "i" }
+    }
+
+    // Filter by owner (for channel page)
+    if (userId && isValidObjectId(userId)) {
+        match.owner = new mongoose.Types.ObjectId(userId)
+    }
+
+    //  Build sort object
+    const sort = {
+        [sortBy]: sortType === "asc" ? 1 : -1
+    }
+
+    //  Create aggregation pipeline
+    const aggregate = Video.aggregate([
+        { $match: match },
+        { $sort: sort }
+    ])
+
+    //  Pagination options
+    const options = {
+        page,
+        limit
+    }
+
+    const result = await Video.aggregatePaginate(aggregate, options)
+
+    return res.status(200).json(
+        new ApiResponse(200, "Videos fetched successfully", result)
+    )
+})
+
+const publishAVideo = asyncHandler(async (req, res) => {
+    const { title, description } = req.body
+    
+    if (!title || !description){
+        throw new ApiError(400, "Title and description are required")
+    }
+
+    // get local file path from multer
+    const videoLocalPath= req.files?.videoFile?.[0].path 
+    const thumbnailLocalPath=req.files?.thumbnail?.[0].path
+
+    if (!videoLocalPath){
+        throw new ApiError(400, "Video file is required")
+    }
+
+    if (!thumbnailLocalPath){
+        throw new ApiError(400, "thumbnail file is required")
+    }
+
+    // upload to cloudinary
+    const uploadedVideo=await uploadOnCloudinary(videoLocalPath)
+    const uploadedThumbnail = await uploadOnCloudinary(thumbnailLocalPath)
+
+     if (!uploadedVideo?.original) {
+        throw new ApiError(500, "Error uploading video")
+    }
+
+    if (!uploadedThumbnail?.optimized) {
+        throw new ApiError(500, "Error uploading thumbnail")
+    }
+
+    // 4️ Save video to database
+    const video = await Video.create({
+        title,
+        description,
+        videoFile: uploadedVideo.original,
+        thumbnail: uploadedThumbnail.optimized,
+        owner: req.user._id
+    })
+
+    return res.status(201).json(
+        new ApiResponse(201, "Video uploaded successfully", video)
+    )
+
+
+})
+
+const getVideoById = asyncHandler(async (req, res) => {
+    const { videoId } = req.params
+    //TODO: get video by id
+})
+
+const updateVideo = asyncHandler(async (req, res) => {
+    const { videoId } = req.params
+    //TODO: update video details like title, description, thumbnail
+
+})
+
+const deleteVideo = asyncHandler(async (req, res) => {
+    const { videoId } = req.params
+    //TODO: delete video
+})
+
+const togglePublishStatus = asyncHandler(async (req, res) => {
+    const { videoId } = req.params
+})
+
+export {
+    getAllVideos,
+    publishAVideo,
+    getVideoById,
+    updateVideo,
+    deleteVideo,
+    togglePublishStatus
+}
