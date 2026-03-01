@@ -14,48 +14,56 @@ cloudinary.config({
 
 export const uploadOnCloudinary = async (localpathfile) => {
     try {
-       
         if (!localpathfile) return null
-        //upload on cloudinary
-        
+
         const uploadResponse = await cloudinary.uploader.upload(localpathfile, {
             resource_type: "auto"
         })
 
-        // Remove temp file after upload
         fs.unlinkSync(localpathfile)
 
-        //optimize image
-        const optimizedUrl = cloudinary.url(uploadResponse.public_id, {
-            fetch_format: "auto",
-            quality: "auto"
-        })
+        // If image → create optimized versions
+        if (uploadResponse.resource_type === "image") {
 
-        // Auto-cropped image
-        const croppedUrl = cloudinary.url(uploadResponse.public_id, {
-            crop: "auto",
-            gravity: "auto",
-            width: 500,
-            height: 500
-        })
+            const optimizedUrl = cloudinary.url(uploadResponse.public_id, {
+                fetch_format: "auto",
+                quality: "auto"
+            })
 
-        return {
-            original: uploadResponse.secure_url,
-            optimized: optimizedUrl,
-            cropped: croppedUrl,
-            public_id: uploadResponse.public_id,
-            resource_type: uploadResponse.resource_type
-        };
+            const croppedUrl = cloudinary.url(uploadResponse.public_id, {
+                crop: "auto",
+                gravity: "auto",
+                width: 500,
+                height: 500
+            })
 
-    }
-    catch (error) {
-        console.error("❌ CLOUDINARY UPLOAD FAILED:", error);
-        // Cleanup temp file if upload fails
-        if (localpathfile && fs.existsSync(localpathfile)) {
-            fs.unlinkSync(localpathfile);
+            return {
+                original: uploadResponse.secure_url,
+                optimized: optimizedUrl,
+                cropped: croppedUrl,
+                public_id: uploadResponse.public_id,
+                resource_type: "image"
+            }
         }
-        return null;
 
+        // If video → just return video URL
+        if (uploadResponse.resource_type === "video") {
+            return {
+                original: uploadResponse.secure_url,
+                public_id: uploadResponse.public_id,
+                resource_type: "video"
+            }
+        }
+
+        return null
+
+    } catch (error) {
+        console.error(" CLOUDINARY UPLOAD FAILED:", error)
+
+        if (localpathfile && fs.existsSync(localpathfile)) {
+            fs.unlinkSync(localpathfile)
+        }
+
+        return null
     }
-
 }
