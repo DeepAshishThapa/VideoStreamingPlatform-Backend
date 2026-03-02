@@ -106,21 +106,82 @@ const getVideoById = asyncHandler(async (req, res) => {
         throw new ApiError(400, "Invalid video ID")
     }
 
-    // Find video and populate owner
-    const video = await Video.findById(videoId)
-        .populate("owner", "username avatar")
+    // get video with comments and likes    
+    const video = await Video.aggregate([
+        {
+            $match: {
+                _id: new mongoose.Types.ObjectId(videoId)
+            }
+        },
 
-    if (!video) {
+        // lookup owner
+        {
+            $lookup: {
+                from: "users",
+                localField: "owner",
+                foreignField: "_id",
+                as: "owner"
+            }
+        },
+        {
+            $unwind: "$owner"
+        },
+
+        //lookup likes
+        {
+            $lookup: {
+                from: "likes",
+                localField: "_id",
+                foreignField: "video",
+                as: "likes"
+            }
+        },
+
+        //lookup comments
+        {
+            $lookup: {
+                from: "comments",
+                localField: "_id",
+                foreignField: "video",
+                as: "comments"
+            }
+        },
+
+        // Add computed fields
+        {
+            $addFields: {
+                likesCount: { $size: "$likes" },
+                commentsCount: { $size: "$comments" },
+                isLiked: {
+                    $in: [
+                        req.user?._id,
+                        "$likes.likedBy"
+                    ]
+                }
+            }
+        },
+
+        // clean output
+        {
+            $project: {
+                "owner.password": 0,
+                likes: 0
+            }
+        }
+    ])
+
+    if (!video.length) {
         throw new ApiError(404, "Video not found")
     }
 
-    // Increase view count
-    video.views += 1
-    await video.save()
+    // Increment views seperately
+    await Video.findByIdAndUpdate(videoId, { $inc: { views: 1 } })
 
     return res.status(200).json(
-        new ApiResponse(200, "Video fetched successfully", video)
+        new ApiResponse(200, "Video fetched successfully", video[0])
     )
+
+
 
 })
 
@@ -177,7 +238,7 @@ const updateVideo = asyncHandler(async (req, res) => {
 const deleteVideo = asyncHandler(async (req, res) => {
     const { videoId } = req.params
 
-     // Validate ID
+    // Validate ID
     if (!isValidObjectId(videoId)) {
         throw new ApiError(400, "Invalid video ID")
     }
@@ -194,7 +255,7 @@ const deleteVideo = asyncHandler(async (req, res) => {
         throw new ApiError(403, "You are not allowed to delete this video")
     }
 
-     // Delete from database
+    // Delete from database
     await video.deleteOne()
 
 
@@ -203,7 +264,7 @@ const deleteVideo = asyncHandler(async (req, res) => {
 const togglePublishStatus = asyncHandler(async (req, res) => {
     const { videoId } = req.params
 
-      // Validate ID
+    // Validate ID
     if (!isValidObjectId(videoId)) {
         throw new ApiError(400, "Invalid video ID")
     }
