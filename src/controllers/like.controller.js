@@ -24,7 +24,7 @@ const toggleVideoLike = asyncHandler(async (req, res) => {
         await existingLike.deleteOne()
 
         return res.status(200).json(
-            new ApiResponse(200, "Video unliked",{})
+            new ApiResponse(200, "Video unliked", {})
         )
     }
 
@@ -36,7 +36,7 @@ const toggleVideoLike = asyncHandler(async (req, res) => {
     })
 
     return res.status(200).json(
-        new ApiResponse(200, "Video liked",{})
+        new ApiResponse(200, "Video liked", {})
     )
 })
 
@@ -77,7 +77,7 @@ const toggleCommentLike = asyncHandler(async (req, res) => {
 })
 
 const toggleTweetLike = asyncHandler(async (req, res) => {
-     const { tweetId } = req.params
+    const { tweetId } = req.params
 
     if (!isValidObjectId(tweetId)) {
         throw new ApiError(400, "Invalid tweet ID")
@@ -113,7 +113,20 @@ const toggleTweetLike = asyncHandler(async (req, res) => {
 )
 
 const getLikedVideos = asyncHandler(async (req, res) => {
-    //TODO: get all liked videos
+    const likes = await Like.find({
+        likedBy: req.user._id,
+        video: { $ne: null }
+    })
+        .populate({
+            path: "video",
+            select: "title thumbnail views createdAt"
+        })
+
+    const videos = likes.map(like => like.video)
+
+    return res.status(200).json(
+        new ApiResponse(200, "Liked videos fetched successfully", videos)
+    )
 })
 
 export {
