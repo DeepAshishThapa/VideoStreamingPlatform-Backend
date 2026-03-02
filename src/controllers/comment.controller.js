@@ -50,13 +50,13 @@ const getVideoComments = asyncHandler(async (req, res) => {
         }
     ])
 
-     // Pagination
+    // Pagination
     const options = {
         page,
         limit
     }
 
-     const result = await Comment.aggregatePaginate(aggregate, options)
+    const result = await Comment.aggregatePaginate(aggregate, options)
 
     return res.status(200).json(
         new ApiResponse(200, "Comments fetched successfully", result)
@@ -67,7 +67,40 @@ const getVideoComments = asyncHandler(async (req, res) => {
 })
 
 const addComment = asyncHandler(async (req, res) => {
-    // TODO: add a comment to a video
+    const { videoId } = req.params
+    const { content } = req.body
+
+    // Validate videoId
+    if (!isValidObjectId(videoId)) {
+        throw new ApiError(400, "Invalid video ID")
+    }
+
+    // Validate content
+    if (!content || !content.trim()) {
+        throw new ApiError(400, "Comment content is required")
+    }
+
+    // Check if video exists
+    const video = await Video.findById(videoId)
+
+    if (!video) {
+        throw new ApiError(404, "Video not found")
+    }
+
+    // Create comment
+    const comment = await Comment.create({
+        content: content.trim(),
+        video: videoId,
+        owner: req.user._id
+    })
+
+    // Populate owner info for response
+    const populatedComment = await Comment.findById(comment._id)
+        .populate("owner", "username avatar")
+
+    return res.status(201).json(
+        new ApiResponse(201, "Comment added successfully", populatedComment)
+    )
 })
 
 const updateComment = asyncHandler(async (req, res) => {
