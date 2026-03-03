@@ -1,12 +1,12 @@
 import mongoose, { isValidObjectId } from "mongoose"
 import { Video } from "../models/video.model.js"
-import { ApiError } from "../utils/ApiError.js"
-import { ApiResponse } from "../utils/ApiResponse.js"
-import { asyncHandler } from "../utils/asyncHandler.js"
+import ApiError from "../utils/ApiError.js"
+import ApiResponse from "../utils/ApiResponse.js"
+
 import { uploadOnCloudinary } from "../utils/cloudinary.js"
 
 
-const getAllVideos = asyncHandler(async (req, res) => {
+const getAllVideos = async (req, res) => {
     let { page = 1, limit = 10, query, sortBy = "createdAt", sortType = "desc", userId } = req.query
 
     page = Number(page)
@@ -49,9 +49,9 @@ const getAllVideos = asyncHandler(async (req, res) => {
     return res.status(200).json(
         new ApiResponse(200, "Videos fetched successfully", result)
     )
-})
+}
 
-const publishAVideo = asyncHandler(async (req, res) => {
+const publishAVideo = async (req, res) => {
     const { title, description } = req.body
 
     if (!title || !description) {
@@ -96,9 +96,9 @@ const publishAVideo = asyncHandler(async (req, res) => {
     )
 
 
-})
+}
 
-const getVideoById = asyncHandler(async (req, res) => {
+const getVideoById = async (req, res) => {
     const { videoId } = req.params
 
     if (!isValidObjectId(videoId)) {
@@ -183,9 +183,9 @@ const getVideoById = asyncHandler(async (req, res) => {
 
 
 
-})
+}
 
-const updateVideo = asyncHandler(async (req, res) => {
+const updateVideo = async (req, res) => {
     const { videoId } = req.params
     const { title, description } = req.body
 
@@ -233,9 +233,9 @@ const updateVideo = asyncHandler(async (req, res) => {
 
 
 
-})
+}
 
-const deleteVideo = asyncHandler(async (req, res) => {
+const deleteVideo = async (req, res) => {
     const { videoId } = req.params
 
     // Validate ID
@@ -259,9 +259,9 @@ const deleteVideo = asyncHandler(async (req, res) => {
     await video.deleteOne()
 
 
-})
+}
 
-const togglePublishStatus = asyncHandler(async (req, res) => {
+const togglePublishStatus = async (req, res) => {
     const { videoId } = req.params
 
     // Validate ID
@@ -293,7 +293,7 @@ const togglePublishStatus = asyncHandler(async (req, res) => {
             { isPublished: video.isPublished }
         )
     )
-})
+}
 
 export {
     getAllVideos,
