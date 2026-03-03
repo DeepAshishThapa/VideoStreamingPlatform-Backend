@@ -113,7 +113,7 @@ const removeVideoFromPlaylist = async (req, res) => {
 
     // Check ownership
     if (playlist.owner.toString() !== req.user._id.toString()) {
-        throw new ApiError(403, "Unauthorized")
+        throw new ApiError(403, "Unauthorized request")
     }
 
     // Remove video from playlist
@@ -132,13 +132,62 @@ const removeVideoFromPlaylist = async (req, res) => {
 
 const deletePlaylist = async (req, res) => {
     const { playlistId } = req.params
-    // TODO: delete playlist
+
+    // Validate playlist ID
+    if (!isValidObjectId(playlistId)) {
+        throw new ApiError(400, "Invalid playlist ID")
+    }
+
+    // Find playlist
+    const playlist = await Playlist.findById(playlistId)
+
+    if (!playlist) {
+        throw new ApiError(404, "Playlist not found")
+    }
+
+    // Check ownership (only owner can delete)
+    if (playlist.owner.toString() !== req.user._id.toString()) {
+        throw new ApiError(403, "Unauthorized request")
+    }
+
+    // Delete playlist
+    await playlist.deleteOne()
+
+    return res.status(200).json(
+        new ApiResponse(200, "Playlist deleted successfully", {})
+    )
 }
 
 const updatePlaylist = async (req, res) => {
     const { playlistId } = req.params
     const { name, description } = req.body
-    //TODO: update playlist
+
+    // Validate playlist ID
+    if (!isValidObjectId(playlistId)) {
+        throw new ApiError(400, "Invalid playlist ID")
+    }
+
+    // Find playlist
+    const playlist = await Playlist.findById(playlistId)
+
+    if (!playlist) {
+        throw new ApiError(404, "Playlist not found")
+    }
+
+    //  Check ownership
+    if (playlist.owner.toString() !== req.user._id.toString()) {
+        throw new ApiError(403, "Unauthorized")
+    }
+
+    //  Update fields if provided
+    if (name) playlist.name = name
+    if (description) playlist.description = description
+
+    await playlist.save()
+
+    return res.status(200).json(
+        new ApiResponse(200, "Playlist updated successfully", playlist)
+    )
 }
 
 export {
