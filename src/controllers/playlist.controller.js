@@ -82,7 +82,7 @@ const addVideoToPlaylist = async (req, res) => {
 
     // Check ownership (only owner can modify)
     if (playlist.owner.toString() !== req.user._id.toString()) {
-        throw new ApiError(403, "Unauthorized")
+        throw new ApiError(403, "Unauthorized request")
     }
 
     // Prevent duplicate video
@@ -98,7 +98,35 @@ const addVideoToPlaylist = async (req, res) => {
 
 const removeVideoFromPlaylist = async (req, res) => {
     const { playlistId, videoId } = req.params
-    // TODO: remove video from playlist
+
+    // Validate IDs
+    if (!isValidObjectId(playlistId) || !isValidObjectId(videoId)) {
+        throw new ApiError(400, "Invalid ID")
+    }
+
+    // Find playlist
+    const playlist = await Playlist.findById(playlistId)
+
+    if (!playlist) {
+        throw new ApiError(404, "Playlist not found")
+    }
+
+    // Check ownership
+    if (playlist.owner.toString() !== req.user._id.toString()) {
+        throw new ApiError(403, "Unauthorized")
+    }
+
+    // Remove video from playlist
+    playlist.videos = playlist.videos.filter(
+        v => v.toString() !== videoId
+    )
+
+    await playlist.save()
+
+    // Return updated playlist
+    return res.status(200).json(
+        new ApiResponse(200, "Video removed from playlist", playlist)
+    )
 
 }
 
