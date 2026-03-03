@@ -1,10 +1,10 @@
 import mongoose from "mongoose"
 import { Comment } from "../models/comment.model.js"
-import { ApiError } from "../utils/ApiError.js"
-import { ApiResponse } from "../utils/ApiResponse.js"
-import { asyncHandler } from "../utils/asyncHandler.js"
+import  ApiError  from "../utils/ApiError.js"
+import ApiResponse from "../utils/ApiResponse.js"
 
-const getVideoComments = asyncHandler(async (req, res) => {
+
+const getVideoComments = async (req, res) => {
 
     const { videoId } = req.params
     const { page = 1, limit = 10 } = req.query
@@ -64,9 +64,9 @@ const getVideoComments = asyncHandler(async (req, res) => {
 
 
 
-})
+}
 
-const addComment = asyncHandler(async (req, res) => {
+const addComment = async (req, res) => {
     const { videoId } = req.params
     const { content } = req.body
 
@@ -101,9 +101,9 @@ const addComment = asyncHandler(async (req, res) => {
     return res.status(201).json(
         new ApiResponse(201, "Comment added successfully", populatedComment)
     )
-})
+}
 
-const updateComment = asyncHandler(async (req, res) => {
+const updateComment = async (req, res) => {
     const { commentId } = req.params
     const { content } = req.body
 
@@ -140,9 +140,9 @@ const updateComment = asyncHandler(async (req, res) => {
     return res.status(200).json(
         new ApiResponse(200, "Comment updated successfully", updatedComment)
     )
-})
+}
 
-const deleteComment = asyncHandler(async (req, res) => {
+const deleteComment = async (req, res) => {
     const { commentId } = req.params
 
     //  Validate ID
@@ -168,7 +168,7 @@ const deleteComment = asyncHandler(async (req, res) => {
     return res.status(200).json(
         new ApiResponse(200, "Comment deleted successfully")
     )
-})
+}
 
 export {
     getVideoComments,

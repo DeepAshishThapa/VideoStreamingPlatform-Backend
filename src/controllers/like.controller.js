@@ -1,10 +1,10 @@
 import mongoose, { isValidObjectId } from "mongoose"
 import { Like } from "../models/like.model.js"
-import { ApiError } from "../utils/ApiError.js"
-import { ApiResponse } from "../utils/ApiResponse.js"
-import { asyncHandler } from "../utils/asyncHandler.js"
+import  ApiError  from "../utils/ApiError.js"
+import  ApiResponse from "../utils/ApiResponse.js"
 
-const toggleVideoLike = asyncHandler(async (req, res) => {
+
+const toggleVideoLike = async (req, res) => {
     const { videoId } = req.params
 
     // Validate MongoDB ObjectId
@@ -38,9 +38,9 @@ const toggleVideoLike = asyncHandler(async (req, res) => {
     return res.status(200).json(
         new ApiResponse(200, "Video liked", {})
     )
-})
+}
 
-const toggleCommentLike = asyncHandler(async (req, res) => {
+const toggleCommentLike = async (req, res) => {
     const { commentId } = req.params
 
     if (!isValidObjectId(commentId)) {
@@ -74,9 +74,9 @@ const toggleCommentLike = asyncHandler(async (req, res) => {
         new ApiResponse(200, "Comment liked", {})
     )
 
-})
+}
 
-const toggleTweetLike = asyncHandler(async (req, res) => {
+const toggleTweetLike = async (req, res) => {
     const { tweetId } = req.params
 
     if (!isValidObjectId(tweetId)) {
@@ -110,9 +110,9 @@ const toggleTweetLike = asyncHandler(async (req, res) => {
         new ApiResponse(200, "Tweet liked", {})
     )
 }
-)
 
-const getLikedVideos = asyncHandler(async (req, res) => {
+
+const getLikedVideos = async (req, res) => {
     const likes = await Like.find({
         likedBy: req.user._id,
         video: { $ne: null }
@@ -127,7 +127,7 @@ const getLikedVideos = asyncHandler(async (req, res) => {
     return res.status(200).json(
         new ApiResponse(200, "Liked videos fetched successfully", videos)
     )
-})
+}
 
 export {
     toggleCommentLike,
