@@ -92,7 +92,7 @@ Used <strong>Mongoose aggregation pipelines</strong> to calculate metrics such a
 </li>
 
 <li>
-Implemented reusable utilities such as <strong>asyncHandler, ApiError, and ApiResponse</strong> to standardize error handling and API responses across the application.
+Implemented reusable utilities such as <strong>ApiError and ApiResponse</strong> to standardize error handling and API responses across the application.
 </li>
 
 <li>
